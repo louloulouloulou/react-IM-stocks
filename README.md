@@ -4,8 +4,8 @@ A Facebook messenger style chat application with live stock prices.
 This project builds on [paul pagnan's react-instant-chat.](https://github.com/paul-pagnan/react-instant-chat)
 This project was made using [React](https://reactjs.org/), [socket.io](https://socket.io/), and [IEX's Market Data API](https://iextrading.com/developer/docs/#iex-market-data).
 
-![](./example1.png)
-![](./example2.png)
+![](./chat1.png)
+![](./chat2.png)
 
 ## Documentation
 
