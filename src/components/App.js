@@ -34,7 +34,7 @@ class App extends React.Component {
     // Initial page load, show a simple login form
     return (
       <form onSubmit={this.usernameSubmitHandler} className="username-container">
-        <h1>React Instant Chat</h1>
+        <h1>React Instant Messaging</h1>
         <div>
           <input
             type="text"

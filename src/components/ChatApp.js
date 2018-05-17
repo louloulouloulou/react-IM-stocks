@@ -11,23 +11,33 @@ const https = require('https'); //HTTPS for IEX get request.
 
 //given a message, return a comma-separated list of stock prices found within, for use with IEX API.
 //note: stock symbols like AIG+ refer to warrants belonging to AIG, so we only care about letter-only stock codes.
+
 const stockPrices = function(message){
-  var words = message.split(' '); // look at each individual word in the message
+  var potentialPrices = message.split('$').splice(1); // look at each '$' in the message (except whatever preceds the first $)
+
   var stocksymbols = '';
   var added = []; // keep track of all the symbols we have run into, we don't need to do multiple lookups.
-    for(var i = 0; i < words.length; i++){
-      var symbol = words[i].slice(1);
-      if(words[i].charAt(0) === '$' && /^[a-z]+$/i.test(symbol)){ // if word starts with $ and the symbol is made of letters it might be a stock price
-        if(added.indexOf(symbol) > -1)
-          continue // we have seen this symbol already, no need to do duplicate lookups for it.
-        if(stocksymbols!='')
-          stocksymbols+=','+symbol;
-        else
-          stocksymbols+=symbol;
-        added.push(symbol);
-      }
+
+  for(var i = 0; i < potentialPrices.length; i++){
+    var currentStock = potentialPrices[i];
+    var symbol = ''; // The user may have given us input like '($AAPL,$FB , $AMZN). We will extract symbols from characters and spaces here.'
+    for(var j = 0; j < currentStock.length; j++){
+      if(!/^[a-z]+$/i.test(currentStock.charAt(j))) // gather all letter characters that we find following the '$'
+        break // once we find something that isnt a letter, the stock symbol has been read.
+      symbol+=currentStock.charAt(j) // add each of them to the symbol
     }
-  return stocksymbols;
+
+    if(symbol){ // if the symbol has any letters in it now, it might be a stock price
+      if(added.indexOf(symbol) > -1)
+        continue // we have seen this symbol already, no need to do duplicate lookups for it.
+      if(stocksymbols!='')
+        stocksymbols+=','+symbol;
+      else
+        stocksymbols+=symbol;
+      added.push(symbol); // add new symbols to the list of symbols seen so far
+    }
+  }
+  return stocksymbols; // return the symbols with commas inbetween (required syntax for IEX last endpoint)
 }
 
 //given a JSON of stock data, make a message to be sent via chat to show prices.
@@ -36,7 +46,8 @@ const StockBot = function(symbols, data){
   var notfound = false;
   var found = false;
   var message = '';
-  for(var i = 0; i < data.length; i++){
+
+  for(var i = 0; i < data.length; i++){ // for each JSON entry in the GET request's data
     if(!data[i].symbol){ // one of the symbols we were given was not found in the IEX system.
       notfound = true;
       continue;
@@ -46,6 +57,8 @@ const StockBot = function(symbols, data){
     // we found a price for this symbol, remove it from the yet-to-be-found list
     symbols.splice(symbols.indexOf(data[i].symbol), 1);
   }
+
+  //Format the output message based on the prices we found (or didn't).
   if(found)
     message = 'Last traded prices for the stocks I found (USD):\n' + message;
   if(notfound)
@@ -120,7 +133,7 @@ class ChatApp extends React.Component {
   render() {
     return (
       <div className="container">
-        <h3>React Chat App</h3>
+        <h3>React IM</h3>
         <Messages messages={this.state.messages} />
         <ChatInput onSend={this.sendHandler} />
       </div>
